@@ -1,26 +1,18 @@
-import { FunctionComponent } from "react";
-import { useQuery, gql } from "@apollo/client";
-
-interface Author {
-  author: string;
-  id: number;
-}
-
-interface AuthorData {
-  authors: Author[];
-}
-
-const GET_AUTHORS = gql`
-  query Authors {
-    authors {
-      author
-      id
-    }
-  }
-`;
+import { FunctionComponent, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { fetchAuthors } from "../features/authorsSlice";
+import { AppThunkDispatch, useAppSelector } from "../store/store";
 
 const Authors: FunctionComponent = () => {
-  const { loading, error, data } = useQuery<AuthorData>(GET_AUTHORS);
+  const dispatch = useDispatch<AppThunkDispatch>();
+  const { authors, status, error } = useAppSelector((state) => state.authors);
+
+  useEffect(() => {
+    dispatch(fetchAuthors());
+  }, []);
+
+  if (status === "pending") return <p>Loading...</p>;
+  if (error) return <p>Error</p>;
 
   return (
     <div
@@ -33,18 +25,15 @@ const Authors: FunctionComponent = () => {
       }}
     >
       <h1>AUTHORS</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <ul>
-          {data?.authors.map((author) => (
+
+      <ul>
+        {authors &&
+          authors.map((author) => (
             <li key={author.id}>
               <p>{author.author}</p>
             </li>
           ))}
-        </ul>
-      )}
-      {error && <p>Error</p>}
+      </ul>
     </div>
   );
 };
